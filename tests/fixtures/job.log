@@ -1,0 +1,39 @@
+build	UNKNOWN STEP	﻿2024-09-28T11:25:29.6825818Z Current runner version: '2.337.0'
+build	UNKNOWN STEP	2024-09-28T11:25:29.6826100Z ##[group]Runner Image Provisioner
+build	UNKNOWN STEP	2024-09-28T11:25:29.6826400Z Hosted Compute Agent
+build	UNKNOWN STEP	2024-09-28T11:25:29.6826600Z Image: ubuntu-24.04
+build	UNKNOWN STEP	2024-09-28T11:25:29.6826800Z ##[endgroup]
+build	UNKNOWN STEP	2024-09-28T11:25:29.7000000Z
+build	Set up job	2024-09-28T11:25:29.7200000Z ##[group]Operating System
+build	Set up job	2024-09-28T11:25:29.7201000Z Ubuntu 24.04.5 LTS
+build	Set up job	2024-09-28T11:25:29.7202000Z ##[endgroup]
+build	Run actions/checkout@v4	2024-09-28T11:25:31.0000000Z ##[group]Run actions/checkout@v4
+build	Run actions/checkout@v4	2024-09-28T11:25:31.0001000Z with:
+build	Run actions/checkout@v4	2024-09-28T11:25:31.0002000Z   ref: refs/heads/main
+build	Run actions/checkout@v4	2024-09-28T11:25:31.0003000Z   path: /
+build	Run actions/checkout@v4	2024-09-28T11:25:31.1000000Z [command]/usr/bin/git --version
+build	Run actions/checkout@v4	2024-09-28T11:25:31.2000000Z [command]/usr/bin/git init /__w/repo/repo
+build	Run actions/checkout@v4	2024-09-28T11:25:31.4000000Z hint: Using 'master' as initial branch
+build	Run actions/checkout@v4	2024-09-28T11:25:31.4001000Z hint: 	git config --global init.defaultBranch <name>
+build	Run actions/checkout@v4	2024-09-28T11:25:31.6000000Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4.
+build	Run actions/checkout@v4	2024-09-28T11:25:31.7000000Z ##[endgroup]
+build	Run cargo test	2024-09-28T11:25:33.0000000Z ##[group]Run cargo test
+build	Run cargo test	2024-09-28T11:25:33.0001000Z   Compiling runline v1.0.0 (/github/workspace)
+build	Run cargo test	2024-09-28T11:25:33.0002000Z    Finished test profile [unoptimized + debuginfo] target(s) in 1.42s
+build	Run cargo test	2024-09-28T11:25:33.1000000Z running 12 tests
+build	Run cargo test	2024-09-28T11:25:33.2000000Z test copy::tests::test_all_copy_strings_are_lowercase ... ok
+build	Run cargo test	2024-09-28T11:25:33.3000000Z test dir::tests::errored ... ok
+build	Run cargo test	2024-09-28T11:25:33.4000000Z test parse::tests::test_log_parser ... FAILED
+build	Run cargo test	2024-09-28T11:25:33.5000000Z ##[error]test parse::tests::test_log_parser ... FAILED
+build	Run cargo test	2024-09-28T11:25:33.6000000Z ##[group]parse::tests::test_log_parser stdout
+build	Run cargo test	2024-09-28T11:25:33.6001000Z
+build	Run cargo test	2024-09-28T11:25:33.6002000Z assertion `left == right` failed
+build	Run cargo test	2024-09-28T11:25:33.6003000Z   left: "Failed"
+build	Run cargo test	2024-09-28T11:25:33.6004000Z  right: "failed"
+build	Run cargo test	2024-09-28T11:25:33.7000000Z note: run with `RUST_BACKTRACE=1` ...
+build	Run cargo test	2024-09-28T11:25:33.8000000Z ##[endgroup]
+build	Run cargo test	2024-09-28T11:25:34.0000000Z error: test failed, to rerun pass `-p runline --lib parse::tests::test_log_parser`
+build	Run cargo test	2024-09-28T11:25:34.1000000Z ##[endgroup]
+build	Complete job	2024-09-28T11:25:35.0000000Z ##[group]Post Run cargo test
+build	Complete job	2024-09-28T11:25:35.1000000Z ##[endgroup]
+build	Complete job	2024-09-28T11:25:35.2000000Z ##[error]Process completed with exit code 101.

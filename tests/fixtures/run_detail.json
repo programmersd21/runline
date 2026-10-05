@@ -1,0 +1,63 @@
+{
+  "databaseId": 1001,
+  "number": 101,
+  "name": "ci",
+  "workflowName": "ci",
+  "displayTitle": "feat/parser: add log parser tests",
+  "event": "push",
+  "headBranch": "feat/parser",
+  "headSha": "a1b2c3d",
+  "actor": { "login": "mira" },
+  "status": "completed",
+  "conclusion": "failure",
+  "createdAt": "2026-03-30T12:00:00Z",
+  "startedAt": "2026-03-30T12:00:02Z",
+  "updatedAt": "2026-03-30T12:04:14Z",
+  "url": "https://github.com/octocat/runline/actions/runs/1001",
+  "attempt": 1,
+  "jobs": [
+    {
+      "databaseId": 5001,
+      "name": "test (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "failure",
+      "startedAt": "2026-03-30T12:00:02Z",
+      "completedAt": "2026-03-30T12:04:14Z",
+      "runnerName": "GitHub Actions 2",
+      "steps": [
+        {
+          "name": "set up rust",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-03-30T12:00:02Z",
+          "completedAt": "2026-03-30T12:00:12Z"
+        },
+        {
+          "name": "cargo test",
+          "status": "completed",
+          "conclusion": "failure",
+          "startedAt": "2026-03-30T12:00:12Z",
+          "completedAt": "2026-03-30T12:04:14Z"
+        }
+      ]
+    },
+    {
+      "databaseId": 5002,
+      "name": "lint",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-03-30T12:00:02Z",
+      "completedAt": "2026-03-30T12:01:00Z",
+      "runnerName": "GitHub Actions 1",
+      "steps": [
+        {
+          "name": "cargo clippy",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-03-30T12:00:02Z",
+          "completedAt": "2026-03-30T12:01:00Z"
+        }
+      ]
+    }
+  ]
+}

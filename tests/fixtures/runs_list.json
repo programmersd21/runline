@@ -1,0 +1,53 @@
+[
+  {
+    "databaseId": 101,
+    "number": 42,
+    "name": "ci",
+    "workflowName": "ci",
+    "displayTitle": "fix parser",
+    "event": "push",
+    "headBranch": "feat/parser",
+    "headSha": "abc1234",
+    "status": "completed",
+    "conclusion": "failure",
+    "attempt": 1,
+    "createdAt": "2026-10-01T10:00:00Z",
+    "startedAt": "2026-10-01T10:00:10Z",
+    "updatedAt": "2026-10-01T10:04:22Z",
+    "url": "https://example.com/r/42"
+  },
+  {
+    "databaseId": 102,
+    "number": 43,
+    "name": "release",
+    "workflowName": "release",
+    "displayTitle": "ship it",
+    "event": "push",
+    "headBranch": "main",
+    "headSha": "def5678",
+    "status": "in_progress",
+    "conclusion": "",
+    "attempt": 1,
+    "createdAt": "2026-10-11T10:00:00Z",
+    "startedAt": "2026-10-11T10:00:05Z",
+    "updatedAt": "2026-10-11T10:00:19Z",
+    "url": "https://example.com/r/43"
+  },
+  {
+    "databaseId": 103,
+    "number": 41,
+    "name": "ci",
+    "workflowName": "ci",
+    "displayTitle": "docs tweak",
+    "event": "push",
+    "headBranch": "main",
+    "headSha": "aaa0000",
+    "status": "completed",
+    "conclusion": "success",
+    "attempt": 1,
+    "createdAt": "2026-10-10T09:00:00Z",
+    "startedAt": "2026-10-10T09:00:10Z",
+    "updatedAt": "2026-10-10T09:03:12Z",
+    "url": "https://example.com/r/41"
+  }
+]

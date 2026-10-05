@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "gh_version": "2.40.0",
+  "description": "recorded gh outputs and logs for test suite and demo mode",
+  "files": [
+    "runs_list.json",
+    "run_detail_failed.json",
+    "job_log_failed.txt"
+  ]
+}

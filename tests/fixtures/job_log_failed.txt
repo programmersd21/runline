@@ -1,0 +1,4 @@
+build	Run cargo test	2026-10-01T10:01:00Z ##[group]run tests
+build	Run cargo test	2026-10-01T10:01:01Z running suite
+build	Run cargo test	2026-10-01T10:01:02Z ##[error]test parser failed: expected x got y
+build	Run cargo test	2026-10-01T10:01:03Z ##[endgroup]

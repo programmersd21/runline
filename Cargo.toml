@@ -1,0 +1,36 @@
+[package]
+name = "runline"
+version = "1.0.0"
+edition = "2024"
+authors = ["runline contributors"]
+description = "keyboard-first terminal client for watching and acting on github actions runs"
+license = "MIT"
+
+[dependencies]
+tokio = { version = "1.40", features = ["full"] }
+ratatui = "0.30.2"
+crossterm = "0.29"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "1.0"
+async-trait = "0.1"
+thiserror = "2.0"
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.6.7", features = ["derive"] }
+anyhow = "1.0.104"
+futures = "0.3.34"
+base64 = "0.23.1"
+unicode-width = "0.2"
+
+[dev-dependencies]
+insta = { version = "1.40", features = ["colors"] }
+
+[features]
+default = ["graphics"]
+graphics = []
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "unwind"

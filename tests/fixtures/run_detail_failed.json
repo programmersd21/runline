@@ -1,0 +1,55 @@
+{
+  "databaseId": 101,
+  "number": 42,
+  "name": "ci",
+  "workflowName": "ci",
+  "displayTitle": "fix parser",
+  "event": "push",
+  "headBranch": "feat/parser",
+  "headSha": "abc1234",
+  "status": "completed",
+  "conclusion": "failure",
+  "attempt": 1,
+  "createdAt": "2026-10-01T10:00:00Z",
+  "startedAt": "2026-10-01T10:00:10Z",
+  "updatedAt": "2026-10-01T10:04:22Z",
+  "url": "https://example.com/r/42",
+  "jobs": [
+    {
+      "databaseId": 201,
+      "name": "test",
+      "status": "completed",
+      "conclusion": "failure",
+      "startedAt": "2026-10-01T10:00:10Z",
+      "completedAt": "2026-10-01T10:03:00Z",
+      "runnerName": "ubuntu-latest",
+      "steps": [
+        {
+          "name": "checkout",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "run tests",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "databaseId": 202,
+      "name": "lint",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-01T10:00:10Z",
+      "completedAt": "2026-10-01T10:01:00Z",
+      "steps": [
+        {
+          "name": "lint",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}
