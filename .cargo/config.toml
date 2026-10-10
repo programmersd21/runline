@@ -1,0 +1,9 @@
+# Cross-compiling aarch64 musl from an x86_64 linux runner fails with the
+# default `cc` driver: the host linker is handed aarch64 objects and rejects
+# target-specific flags like `--fix-cortex-a53-843419`. rust-lld ships inside
+# the rust toolchain and understands every target, so point the linker at it.
+# Only applies when building for this triple — a native x86_64 or aarch64
+# build is untouched.
+[target.aarch64-unknown-linux-musl]
+linker = "rust-lld"
+rustflags = ["-C", "target-feature=+crt-static"]

@@ -1,0 +1,249 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  # lets a maintainer rebuild the artifacts for an existing tag without
+  # pushing a new commit. the same checks apply.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "tag to build and publish, e.g. v1.0.1"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # incremental codegen buys nothing for a one-shot release binary and makes
+  # the output depend on what happened to be cached
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  # every job below needs to know the tag being shipped, and a manual run has
+  # to be told which one. resolving it once keeps the rest of the file free of
+  # `inputs.tag or ref_name` conditionals.
+  tag:
+    name: resolve tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - id: resolve
+        env:
+          RAW: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          set -eu
+          tag="${RAW#refs/tags/}"
+          case "$tag" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::'$tag' is not a vMAJOR.MINOR.PATCH tag"; exit 1 ;;
+          esac
+          echo "::notice::building release $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+  verify:
+    name: verify
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: set up rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: check formatting
+        run: cargo fmt --check
+      - name: clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: run tests
+        run: cargo test
+      # a tag that disagrees with Cargo.toml would ship a binary announcing
+      # the wrong version, and nothing else would catch it.
+      - name: tag matches Cargo.toml version
+        env:
+          RELEASE_TAG: ${{ needs.tag.outputs.tag }}
+        run: |
+          set -eu
+          version="$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "runline") | .version')"
+          echo "tag=$RELEASE_TAG  cargo=$version"
+          if [ "$RELEASE_TAG" != "v$version" ]; then
+            echo "::error::tag $RELEASE_TAG does not match Cargo.toml version $version"
+            exit 1
+          fi
+          echo "::notice::tag $RELEASE_TAG matches Cargo.toml version $version"
+
+  build:
+    name: ${{ matrix.target }}
+    needs: [tag, verify]
+    runs-on: ${{ matrix.platform }}
+    env:
+      RELEASE_TAG: ${{ needs.tag.outputs.tag }}
+      RELEASE_VERSION: ${{ needs.tag.outputs.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            platform: ubuntu-latest
+            archive: tar.gz
+          - target: x86_64-unknown-linux-musl
+            platform: ubuntu-latest
+            archive: tar.gz
+          # aarch64 musl links with rust-lld, see .cargo/config.toml
+          - target: aarch64-unknown-linux-musl
+            platform: ubuntu-latest
+            archive: tar.gz
+          - target: x86_64-apple-darwin
+            platform: macos-latest
+            archive: tar.gz
+          - target: aarch64-apple-darwin
+            platform: macos-latest
+            archive: tar.gz
+          - target: x86_64-pc-windows-msvc
+            platform: windows-latest
+            archive: zip
+    steps:
+      - uses: actions/checkout@v4
+      - name: set up rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      # every leg compiles a different triple from the same Cargo.lock, so
+      # the only cache worth sharing between them is the downloaded crate
+      # source. caching target/ as well would have each leg evict the
+      # others' build of a triple it is not going to reuse.
+      - name: cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release-${{ matrix.platform }}
+          cache-target: false
+      - name: build
+        run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: package
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          ARCHIVE_KIND: ${{ matrix.archive }}
+        run: |
+          set -eu
+          staging="runline-$RELEASE_VERSION-$TARGET"
+          mkdir -p "$staging"
+          # windows names it runline.exe, everything else runline
+          if cp "target/$TARGET/release/runline.exe" "$staging/runline.exe" 2>/dev/null; then
+            echo "::notice::$TARGET packaged as runline.exe"
+          else
+            cp "target/$TARGET/release/runline" "$staging/runline"
+            echo "::notice::$TARGET packaged as runline"
+          fi
+          cp LICENSE README.md "$staging/"
+
+          archive="$staging.$ARCHIVE_KIND"
+          if [ "$ARCHIVE_KIND" = zip ]; then
+            # powershell expands the path itself and writes a utf-8 zip, which
+            # is what windows users expect to be able to open
+            powershell -NoProfile -Command \
+              "Compress-Archive -Path '$staging' -DestinationPath '$archive'"
+            # fail here rather than publishing an archive that cannot be
+            # extracted on the platform it claims to target
+            powershell -NoProfile -Command \
+              "Expand-Archive -Path '$archive' -DestinationPath 'unpack-check' -Force"
+          else
+            chmod +x "$staging/runline"
+            tar -czf "$archive" "$staging"
+            tar -tzf "$archive" >/dev/null
+          fi
+          sha256sum "$archive" > "$archive.sha256"
+          echo "::notice::built $archive"
+          cat "$archive.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runline-${{ matrix.target }}
+          path: |
+            runline-${{ env.RELEASE_VERSION }}-${{ matrix.target }}.tar.gz
+            runline-${{ env.RELEASE_VERSION }}-${{ matrix.target }}.tar.gz.sha256
+            runline-${{ env.RELEASE_VERSION }}-${{ matrix.target }}.zip
+            runline-${{ env.RELEASE_VERSION }}-${{ matrix.target }}.zip.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: publish
+    needs: [tag, build]
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ needs.tag.outputs.tag }}
+      RELEASE_VERSION: ${{ needs.tag.outputs.version }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: checksums
+        run: |
+          set -eu
+          cd dist
+          cat ./*.sha256 > SHA256SUMS
+          sha256sum --check SHA256SUMS
+      - name: publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          notes="$(mktemp)"
+          {
+            echo "## runline \`$RELEASE_TAG\`"
+            echo
+            echo "linux: glibc and musl, x86_64 and aarch64. macos: x86_64 and aarch64. windows: x86_64."
+            echo
+            echo '```bash'
+            echo "cargo install runline --version $RELEASE_VERSION"
+            echo '```'
+            echo
+            echo "verify a download with:"
+            echo
+            echo '```bash'
+            echo "sha256sum --check SHA256SUMS"
+            echo '```'
+          } > "$notes"
+          gh release create "$RELEASE_TAG" \
+            --verify-tag \
+            --title "runline $RELEASE_TAG" \
+            --notes-file "$notes" \
+            --generate-notes \
+            dist/*.tar.gz dist/*.zip dist/SHA256SUMS
+      - name: summary
+        if: always()
+        run: |
+          set -eu
+          cd dist
+          {
+            echo "## runline $RELEASE_TAG — release summary"
+            echo
+            echo "| target | archive | size | sha256 |"
+            echo "|---|---|---|---|"
+            for f in ./*.tar.gz ./*.zip; do
+              [ -f "$f" ] || continue
+              size="$(du -h "$f" | cut -f1)"
+              hash="$(sha256sum "$f" | cut -c1-12)…"
+              echo "| $(basename "$f" | sed "s/^runline-$RELEASE_VERSION-//;s/\.\(tar\.gz\|zip\)$//") | \`$(basename "$f")\` | $size | \`$hash\` |"
+            done
+            echo
+            echo "verify a download with:"
+            echo
+            echo '```bash'
+            echo "sha256sum --check SHA256SUMS"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice::release summary written to GITHUB_STEP_SUMMARY"

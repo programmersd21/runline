@@ -1,0 +1,83 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: set up rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      # fmt, clippy, test and doc all compile the same dependency graph into
+      # the same target/ directory, so one cache serves the whole job.
+      # cache-on-failure keeps a red clippy run from throwing away a warm
+      # registry — the next push usually only differs in our own crate.
+      - name: cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      # every check gets its own collapsible log group and its own annotation,
+      # so a failure shows up on the actions page next to the file and line
+      # that caused it instead of at the bottom of a wall of text.
+      - name: checks
+        run: |
+          set -u
+          results="$(mktemp)"
+          : > "$results"
+          fail=0
+          check() {
+            local name="$1"; shift
+            echo "::group::$name"
+            if "$@"; then
+              echo "::notice::$name passed"
+              echo "$name|pass" >> "$results"
+            else
+              echo "::error::$name failed — see the log above"
+              echo "$name|fail" >> "$results"
+              fail=1
+            fi
+            echo "::endgroup::"
+          }
+          check formatting cargo fmt --check
+          check clippy cargo clippy --all-targets -- -D warnings
+          check tests cargo test
+          check docs cargo doc --no-deps
+          check lowercase ./scripts/check_lowercase.sh
+          echo "results=$results" >> "$GITHUB_ENV"
+          [ "$fail" -eq 0 ] || exit 1
+
+      - name: summary
+        if: always()
+        run: |
+          set -eu
+          {
+            echo "## ci — \`${{ github.event_name }}\` on \`${{ github.ref_name }}\`"
+            echo
+            echo "| check | result |"
+            echo "|---|---|"
+            while IFS='|' read -r name status; do
+              [ -n "$name" ] || continue
+              if [ "$status" = pass ]; then
+                echo "| $name | ✅ |"
+              else
+                echo "| $name | ❌ |"
+              fi
+            done < "${{ env.results }}"
+            echo
+            echo "commit: \`${{ github.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
