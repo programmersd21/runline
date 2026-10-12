@@ -5,6 +5,13 @@ edition = "2024"
 authors = ["runline contributors"]
 description = "keyboard-first terminal client for watching and acting on github actions runs"
 license = "MIT"
+repository = "https://github.com/programmersd21/runline"
+homepage = "https://github.com/programmersd21/runline"
+documentation = "https://github.com/programmersd21/runline#readme"
+readme = "README.md"
+keywords = ["github-actions", "tui", "terminal", "ci", "ratatui"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = [".github/", ".cargo/", "assets/", "docs/", "scripts/"]
 
 [dependencies]
 tokio = { version = "1.40", features = ["full"] }
