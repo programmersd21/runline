@@ -186,6 +186,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      # --verify-tag shells out to git, so this job needs the repo too — with
+      # full history, otherwise the tag object itself is missing and the
+      # verify fails with "not a git repository".
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
           path: dist
